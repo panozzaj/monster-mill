@@ -23,8 +23,15 @@ enum Button {
     NONE,
 };
 
+enum Species {
+    FUZZBALL,
+    DRAGON,
+};
+
 struct Monster {
+    int id;
     Monster* nextMonster;
+    Species species;
 
     // space
     int position;
@@ -85,9 +92,20 @@ void setup() {
     // set up initial program state
     for (int i = 0; i < WRITABLE_WIDTH; ++i) {
         pen.treats[i] = 0;
-        pen.firstMonster = (Monster*)malloc(sizeof(Monster));
-        pen.firstMonster->position = 0;
     }
+
+    pen.firstMonster = (Monster*)malloc(sizeof(Monster));
+    pen.firstMonster->position = 0;
+    pen.firstMonster->id = 0;
+    pen.firstMonster->species = FUZZBALL;
+
+    Monster* monster = (Monster*)malloc(sizeof(Monster));
+    monster->position = 1;
+    monster->id = 1;
+    monster->species = DRAGON;
+    monster->nextMonster = NULL;
+
+    pen.firstMonster->nextMonster = monster;
 }
 
 // read the buttons
@@ -122,8 +140,15 @@ void printMonsters() {
 
     String positions = "               ";
 
-    while (monster) {
-        positions[monster->position] = 'a';
+    while (monster != NULL) {
+        if (monster->species == FUZZBALL) {
+            positions[monster->position] = 'f';
+        } else if (monster->species == DRAGON) {
+            positions[monster->position] = 'D';
+        } else {
+            positions[monster->position] = '?';
+        }
+
         monster = monster->nextMonster;
     }
 
@@ -150,8 +175,8 @@ void printBottomLine() {
         } else {
             lcd.print(" ");
         }
-
     }
+
     printCursor();
 }
 
@@ -160,7 +185,7 @@ void updateMonsters() {
     Monster *monster = pen.firstMonster;
 
     while (monster) {
-        monster->position = millis() / 1000 % WRITABLE_WIDTH;
+        monster->position = (millis() / 1000 % WRITABLE_WIDTH + monster->id) % WRITABLE_WIDTH;
         monster = monster->nextMonster;
     }
 }
