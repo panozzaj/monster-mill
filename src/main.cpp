@@ -25,6 +25,7 @@ int last_button = BUTTON_NONE;
 int last_button_pressed_at;
 int adc_key_in = 0;
 int cursor_position = 0;
+int treats[WRITABLE_WIDTH];
 
 // symbols must be positive integers or cast as byte
 #define SYMBOL_CARROT 1
@@ -63,6 +64,11 @@ void setup() {
     // create custom characters
     lcd.createChar(SYMBOL_CARROT, symbol_carrot);
     lcd.createChar(SYMBOL_UNDERSCORE, symbol_underscore);
+
+    // set up initial program state
+    for (int i = 0; i < WRITABLE_WIDTH; ++i) {
+        treats[i] = 0;
+    }
 }
 
 // read the buttons
@@ -115,7 +121,14 @@ void printCursor() {
 void printBottomLine(int pen) {
     lcd.setCursor(0, BOTTOM_LINE);
     lcd.write(SYMBOL_CARROT);
-    lcd.print("               ");
+    for (int i = 0; i < WRITABLE_WIDTH; ++i) {
+        if (treats[i] == 1) {
+            lcd.write(SYMBOL_CARROT);
+        } else {
+            lcd.print(" ");
+        }
+
+    }
     printCursor();
 }
 
@@ -130,6 +143,8 @@ void processInput() {
             cursor_position = cursor_position - 1;
         } else if (last_button == BUTTON_RIGHT) {
             cursor_position = cursor_position + 1;
+        } else if (last_button == BUTTON_SELECT) {
+            treats[cursor_position] = 1;
         }
         cursor_position = (cursor_position + WRITABLE_WIDTH) % WRITABLE_WIDTH;
     }
