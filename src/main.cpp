@@ -12,20 +12,25 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define LCD_WIDTH 16
 #define LCD_HEIGHT 2
 #define WRITABLE_WIDTH (LCD_WIDTH - 1)
+#define WRITABLE_OFFSET 1
 
-#define BUTTON_RIGHT  0
-#define BUTTON_UP     1
-#define BUTTON_DOWN   2
-#define BUTTON_LEFT   3
-#define BUTTON_SELECT 4
-#define BUTTON_NONE   5
+enum Button {
+    RIGHT,
+    UP,
+    DOWN,
+    LEFT,
+    SELECT,
+    NONE,
+};
 
 // define some values used by the panel and buttons
-int last_button = BUTTON_NONE;
+Button last_button = NONE;
 int last_button_pressed_at;
 int adc_key_in = 0;
 int cursor_position = 0;
 int treats[WRITABLE_WIDTH];
+int current_pen = 1;
+int monster_position = 0;
 
 // symbols must be positive integers or cast as byte
 #define SYMBOL_CARROT 1
@@ -53,8 +58,6 @@ byte symbol_underscore[8] = {
     B11111,
 };
 
-int monster_position = 0;
-
 void setup() {
     Serial.begin(9600);
 
@@ -72,7 +75,7 @@ void setup() {
 }
 
 // read the buttons
-int readButtons() {
+Button readButtons() {
     adc_key_in = analogRead(0);      // read the value from the sensor
 
     // LCD buttons when read are centered at values:
@@ -85,12 +88,12 @@ int readButtons() {
     // Add ~50 to those values since they are analog
 
     // check none first since it will be the most likely result
-    if (adc_key_in >= 790) return BUTTON_NONE;
-    if (adc_key_in < 50)   return BUTTON_RIGHT;
-    if (adc_key_in < 195)  return BUTTON_UP;
-    if (adc_key_in < 380)  return BUTTON_DOWN;
-    if (adc_key_in < 555)  return BUTTON_LEFT;
-    return BUTTON_SELECT; // >= 555, < 790
+    if (adc_key_in >= 790) return NONE;
+    if (adc_key_in < 50)   return RIGHT;
+    if (adc_key_in < 195)  return UP;
+    if (adc_key_in < 380)  return DOWN;
+    if (adc_key_in < 555)  return LEFT;
+    return SELECT; // >= 555, < 790
 }
 
 void printMonsters(int pen) {
@@ -109,7 +112,7 @@ void printMonsters(int pen) {
 }
 
 void printCursor() {
-    lcd.setCursor(cursor_position + 1, BOTTOM_LINE);
+    lcd.setCursor(cursor_position + WRITABLE_OFFSET, BOTTOM_LINE);
 
     if (millis() / 500 % 2 == 0) {
         lcd.print(" ");
@@ -137,27 +140,30 @@ void updateMonsters() {
 }
 
 void processInput() {
-    int new_button = readButtons();
+    Button new_button = readButtons();
+
     if (new_button != last_button) {
-        if (last_button == BUTTON_LEFT) {
+        if (last_button == LEFT) {
             cursor_position = cursor_position - 1;
-        } else if (last_button == BUTTON_RIGHT) {
+        } else if (last_button == RIGHT) {
             cursor_position = cursor_position + 1;
-        } else if (last_button == BUTTON_SELECT) {
+        } else if (last_button == SELECT) {
             if (treats[cursor_position] == 0) {
                 treats[cursor_position] = 1;
             } else {
                 treats[cursor_position] = 0;
             }
         }
+        // make sure we are on the writable board
         cursor_position = (cursor_position + WRITABLE_WIDTH) % WRITABLE_WIDTH;
     }
+
     last_button = new_button;
 }
 
 void loop() {
-    printMonsters(1);
+    printMonsters(current_pen);
+    printBottomLine(current_pen);
     processInput();
-    printBottomLine(1);
     updateMonsters();
 }
