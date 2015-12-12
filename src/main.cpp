@@ -144,7 +144,11 @@ void processInput() {
         } else if (last_button == BUTTON_RIGHT) {
             cursor_position = cursor_position + 1;
         } else if (last_button == BUTTON_SELECT) {
-            treats[cursor_position] = 1;
+            if (treats[cursor_position] == 0) {
+                treats[cursor_position] = 1;
+            } else {
+                treats[cursor_position] = 0;
+            }
         }
         cursor_position = (cursor_position + WRITABLE_WIDTH) % WRITABLE_WIDTH;
     }
