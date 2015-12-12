@@ -17,8 +17,10 @@ int adc_key_in = 0;
 #define btnSELECT 4
 #define btnNONE   5
 
+int monster_position = 0;
+
 // read the buttons
-int read_LCD_buttons() {
+int read_lcd_buttons() {
     adc_key_in = analogRead(0);      // read the value from the sensor
 
     // LCD buttons when read are centered at values:
@@ -38,17 +40,32 @@ int read_LCD_buttons() {
 void setup() {
     // initialize LCD screen
     lcd.begin(16, 2);
+}
 
-    lcd.setCursor(0, 0);
-    lcd.print("Push the buttons"); // print a simple message
+void printMonsters() {
+  lcd.setCursor(0, 0);
+  String characters = "";
+  char theCharacter[1];
+  int pen = 1;
+  itoa(pen, theCharacter, 10);
+  characters = characters + theCharacter;
+  for (int position = 0; position < 15; position++) {
+      if (monster_position == position) {
+          characters = characters + "a";
+      } else {
+          characters = characters + " ";
+      }
+  }
+  lcd.print(characters);
 }
 
 void loop() {
-    lcd.setCursor(9, 1);
-    lcd.print(millis() / 1000);
+    printMonsters();
 
     lcd.setCursor(0, 1);
-    lcd_key = read_LCD_buttons();
+    lcd_key = read_lcd_buttons();
+
+    monster_position = (millis() / 1000 % 16);
 
     switch (lcd_key) {
         case btnRIGHT:
