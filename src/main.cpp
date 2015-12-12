@@ -11,11 +11,7 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define BOTTOM_LINE 1
 #define LCD_WIDTH 16
 #define LCD_HEIGHT 2
-
-// define some values used by the panel and buttons
-int last_key = 0;
-int adc_key_in = 0;
-int cursor_position = 0;
+#define WRITABLE_WIDTH (LCD_WIDTH - 1)
 
 #define BUTTON_RIGHT  0
 #define BUTTON_UP     1
@@ -23,6 +19,12 @@ int cursor_position = 0;
 #define BUTTON_LEFT   3
 #define BUTTON_SELECT 4
 #define BUTTON_NONE   5
+
+// define some values used by the panel and buttons
+int last_button = BUTTON_NONE;
+int last_button_pressed_at;
+int adc_key_in = 0;
+int cursor_position = 0;
 
 // symbols must be positive integers or cast as byte
 #define SYMBOL_CARROT 1
@@ -64,7 +66,7 @@ void setup() {
 }
 
 // read the buttons
-int read_lcd_buttons() {
+int readButtons() {
     adc_key_in = analogRead(0);      // read the value from the sensor
 
     // LCD buttons when read are centered at values:
@@ -91,7 +93,7 @@ void printMonsters(int pen) {
   itoa(pen, the_character, 10);
   lcd.print(the_character);
 
-  for (int position = 0; position < 15; position++) {
+  for (int position = 0; position < WRITABLE_WIDTH; position++) {
       if (monster_position == position) {
           lcd.print("a");
       } else {
@@ -101,7 +103,7 @@ void printMonsters(int pen) {
 }
 
 void printCursor() {
-    lcd.setCursor(1, BOTTOM_LINE);
+    lcd.setCursor(cursor_position + 1, BOTTOM_LINE);
 
     if (millis() / 500 % 2 == 0) {
         lcd.print(" ");
@@ -113,15 +115,30 @@ void printCursor() {
 void printBottomLine(int pen) {
     lcd.setCursor(0, BOTTOM_LINE);
     lcd.write(SYMBOL_CARROT);
+    lcd.print("               ");
     printCursor();
 }
 
 void updateMonsters() {
-    monster_position = (millis() / 1000 % 15);
+    monster_position = (millis() / 1000 % WRITABLE_WIDTH);
+}
+
+void processInput() {
+    int new_button = readButtons();
+    if (new_button != last_button) {
+        if (last_button == BUTTON_LEFT) {
+            cursor_position = cursor_position - 1;
+        } else if (last_button == BUTTON_RIGHT) {
+            cursor_position = cursor_position + 1;
+        }
+        cursor_position = (cursor_position + WRITABLE_WIDTH) % WRITABLE_WIDTH;
+    }
+    last_button = new_button;
 }
 
 void loop() {
     printMonsters(1);
+    processInput();
     printBottomLine(1);
     updateMonsters();
 }
