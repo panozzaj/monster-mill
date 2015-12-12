@@ -17,7 +17,29 @@ int adc_key_in = 0;
 #define btnSELECT 4
 #define btnNONE   5
 
+// symbols must be positive integers
+#define SYMBOL_CARROT 1
+
+byte symbol_carrot[8] = {
+    B00000,
+    B01010,
+    B00100,
+    B01110,
+    B01110,
+    B01110,
+    B00100,
+    B00000,
+};
+
 int monster_position = 0;
+
+void setup() {
+    Serial.begin(9600);
+
+    // initialize LCD screen
+    lcd.begin(16, 2);
+    lcd.createChar(SYMBOL_CARROT, symbol_carrot);
+}
 
 // read the buttons
 int read_lcd_buttons() {
@@ -35,11 +57,6 @@ int read_lcd_buttons() {
     if (adc_key_in < 380)  return btnDOWN;
     if (adc_key_in < 555)  return btnLEFT;
     return btnSELECT; // >= 555, < 790
-}
-
-void setup() {
-    // initialize LCD screen
-    lcd.begin(16, 2);
 }
 
 void printMonsters(int pen) {
@@ -61,40 +78,8 @@ void loop() {
     printMonsters(1);
 
     lcd.setCursor(0, 1);
+    lcd.write(SYMBOL_CARROT);
     lcd_key = read_lcd_buttons();
 
     monster_position = (millis() / 500 % 15);
-
-    switch (lcd_key) {
-        case btnRIGHT:
-            {
-                lcd.print("RIGHT ");
-                break;
-            }
-        case btnLEFT:
-            {
-                lcd.print("LEFT   ");
-                break;
-            }
-        case btnUP:
-            {
-                lcd.print("UP    ");
-                break;
-            }
-        case btnDOWN:
-            {
-                lcd.print("DOWN  ");
-                break;
-            }
-        case btnSELECT:
-            {
-                lcd.print("SELECT");
-                break;
-            }
-        case btnNONE:
-            {
-                lcd.print("NONE  ");
-                break;
-            }
-    }
 }
