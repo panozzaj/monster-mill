@@ -35,7 +35,7 @@ struct Monster {
 
 struct Pen {
     Monster *firstMonster;
-    int treats[WRITABLE_WIDTH];
+    bool treats[WRITABLE_WIDTH];
 };
 
 Pen pen;
@@ -145,7 +145,7 @@ void printBottomLine() {
     lcd.write(SYMBOL_CARROT);
 
     for (int i = 0; i < WRITABLE_WIDTH; ++i) {
-        if (pen.treats[i] == 1) {
+        if (pen.treats[i]) {
             lcd.write(SYMBOL_CARROT);
         } else {
             lcd.print(" ");
@@ -174,11 +174,7 @@ void processInput() {
         } else if (last_button == RIGHT) {
             cursor_position = cursor_position + 1;
         } else if (last_button == SELECT) {
-            if (pen.treats[cursor_position] == 0) {
-                pen.treats[cursor_position] = 1;
-            } else {
-                pen.treats[cursor_position] = 0;
-            }
+            pen.treats[cursor_position] = !pen.treats[cursor_position];
         }
         // make sure we are on the writable board
         cursor_position = (cursor_position + WRITABLE_WIDTH) % WRITABLE_WIDTH;
