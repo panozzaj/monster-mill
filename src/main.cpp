@@ -159,8 +159,6 @@ void printCursor() {
     lcd.setCursor(cursor_position + WRITABLE_OFFSET, BOTTOM_LINE);
 
     if (millis() / 500 % 2 == 0) {
-        lcd.print(" ");
-    } else {
         lcd.write(SYMBOL_UNDERSCORE);
     }
 }
