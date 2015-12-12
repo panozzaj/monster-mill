@@ -42,30 +42,28 @@ void setup() {
     lcd.begin(16, 2);
 }
 
-void printMonsters() {
+void printMonsters(int pen) {
   lcd.setCursor(0, 0);
-  String characters = "";
   char theCharacter[1];
-  int pen = 1;
   itoa(pen, theCharacter, 10);
-  characters = characters + theCharacter;
+  lcd.print(theCharacter);
+
   for (int position = 0; position < 15; position++) {
       if (monster_position == position) {
-          characters = characters + "a";
+          lcd.print("a");
       } else {
-          characters = characters + " ";
+          lcd.print(" ");
       }
   }
-  lcd.print(characters);
 }
 
 void loop() {
-    printMonsters();
+    printMonsters(1);
 
     lcd.setCursor(0, 1);
     lcd_key = read_lcd_buttons();
 
-    monster_position = (millis() / 1000 % 16);
+    monster_position = (millis() / 500 % 15);
 
     switch (lcd_key) {
         case btnRIGHT:
