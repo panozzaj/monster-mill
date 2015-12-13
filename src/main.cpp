@@ -29,19 +29,19 @@ enum Species {
 };
 
 struct Monster {
-    int id;
-    Monster* nextMonster;
+    unsigned int id;
+    Monster* next_monster;
     Species species;
 
     // space
-    int position;
+    signed char position;
 
     // status
     int hunger;
 };
 
 struct Pen {
-    Monster *firstMonster;
+    Monster *first_monster;
     bool treats[WRITABLE_WIDTH];
 };
 
@@ -49,8 +49,7 @@ Pen pen;
 
 // define some values used by the panel and buttons
 Button last_button = NONE;
-int last_button_pressed_at;
-int cursor_position = 0;
+signed char cursor_position = 0;
 int current_pen_index = 1;
 
 // symbols must be positive integers or cast as byte
@@ -90,27 +89,28 @@ void setup() {
     lcd.createChar(SYMBOL_UNDERSCORE, symbol_underscore);
 
     // set up initial program state
-    for (int i = 0; i < WRITABLE_WIDTH; ++i) {
+    for (unsigned char i = 0; i < WRITABLE_WIDTH; ++i) {
         pen.treats[i] = 0;
     }
 
-    pen.firstMonster = (Monster*)malloc(sizeof(Monster));
-    pen.firstMonster->position = 0;
-    pen.firstMonster->id = 0;
-    pen.firstMonster->species = FUZZBALL;
+    pen.first_monster = (Monster*)malloc(sizeof(Monster));
+    pen.first_monster->position = 0;
+    pen.first_monster->id = 0;
+    pen.first_monster->species = FUZZBALL;
 
     Monster* monster = (Monster*)malloc(sizeof(Monster));
     monster->position = 1;
     monster->id = 1;
     monster->species = DRAGON;
-    monster->nextMonster = NULL;
+    monster->next_monster = NULL;
 
-    pen.firstMonster->nextMonster = monster;
+    pen.first_monster->next_monster = monster;
 }
 
 // read the buttons
 Button readButtons() {
-    int adc_key_in = analogRead(0);      // read the value from the sensor
+    // read the value from the sensor
+    short int adc_key_in = analogRead(0);
 
     // LCD buttons when read are centered at values:
     //  Right: 0
@@ -136,7 +136,7 @@ void printMonsters() {
     itoa(current_pen_index, the_character, 10);
     lcd.print(the_character);
 
-    Monster* monster = pen.firstMonster;
+    Monster* monster = pen.first_monster;
 
     String positions = "               ";
 
@@ -149,7 +149,7 @@ void printMonsters() {
             positions[monster->position] = '?';
         }
 
-        monster = monster->nextMonster;
+        monster = monster->next_monster;
     }
 
     lcd.print(positions);
@@ -180,11 +180,11 @@ void printBottomLine() {
 
 void updateMonsters() {
     int new_position;
-    Monster *monster = pen.firstMonster;
+    Monster *monster = pen.first_monster;
 
     while (monster) {
         monster->position = (millis() / 1000 % WRITABLE_WIDTH + monster->id) % WRITABLE_WIDTH;
-        monster = monster->nextMonster;
+        monster = monster->next_monster;
     }
 }
 
