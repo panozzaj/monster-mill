@@ -67,7 +67,7 @@ Pen pen;
 Button last_button = NONE;
 signed char cursor_position = 0;
 int current_pen_index = 1;
-int bank_balance = 1000;
+int bank_balance = 100;
 char input_mode = INPUT_MODE_TREAT;
 
 // symbols must be positive integers or cast as byte
@@ -126,8 +126,8 @@ void setup() {
     Monster* monster = (Monster*)malloc(sizeof(Monster));
     monster->position = 3;
     monster->id = 1;
-    monster->species = DRAGON;
-    monster->speed = 8;
+    monster->species = FUZZBALL;
+    monster->speed = 3;
     monster->last_acted_millis = millis();
     monster->hunger = 5;
     monster->alive = 1;
@@ -233,6 +233,7 @@ void printBottomLine() {
             lcd.setCursor(0, BOTTOM_LINE);
             lcd.print("$");
             lcd.print(bank_balance);
+            lcd.print("               ");
             break;
 
         default:
@@ -337,7 +338,16 @@ void processInput() {
         } else if (last_button == DOWN) {
             input_mode += 1;
         } else if (last_button == SELECT) {
-            pen.treats[cursor_position] = !pen.treats[cursor_position];
+            if (pen.treats[cursor_position]) {
+                // remove treat
+                pen.treats[cursor_position] = 0;
+                bank_balance++;
+            } else {
+                if (bank_balance > 0) {
+                    pen.treats[cursor_position] = 1;
+                    bank_balance--;
+                }
+            }
         }
 
         // make sure we are positive
