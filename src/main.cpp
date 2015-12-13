@@ -96,6 +96,22 @@ byte symbol_underscore[8] = {
     B11111,
 };
 
+Monster* createMonster(char position) {
+    Monster* monster = (Monster*)malloc(sizeof(Monster));
+    monster->position = position;
+    monster->id = 0;
+    monster->species = FUZZBALL;
+    monster->speed = 3;
+    monster->hunger = 5;
+    monster->alive = 1;
+    monster->last_acted_millis = millis();
+    monster->last_hunger_millis = millis();
+    monster->born_at_millis = millis();
+    monster->previous_monster = NULL;
+    monster->next_monster = NULL;
+    return monster;
+}
+
 void setup() {
     Serial.begin(9600);
 
@@ -111,45 +127,14 @@ void setup() {
         pen.treats[i] = 0;
     }
 
-    pen.first_monster = (Monster*)malloc(sizeof(Monster));
-    pen.first_monster->position = 0;
-    pen.first_monster->id = 0;
-    pen.first_monster->species = FUZZBALL;
-    pen.first_monster->speed = 3;
-    pen.first_monster->last_acted_millis = millis();
-    pen.first_monster->hunger = 5;
-    pen.first_monster->alive = 1;
-    pen.first_monster->last_hunger_millis = millis();
-    pen.first_monster->previous_monster = NULL;
-    pen.first_monster->next_monster = NULL;
+    pen.first_monster = createMonster(2);
+    Monster* monster1 = createMonster(6);
+    Monster* monster2 = createMonster(10);
 
-    Monster* monster = (Monster*)malloc(sizeof(Monster));
-    monster->position = 3;
-    monster->id = 1;
-    monster->species = FUZZBALL;
-    monster->speed = 3;
-    monster->last_acted_millis = millis();
-    monster->hunger = 5;
-    monster->alive = 1;
-    monster->last_hunger_millis = millis();
-
-    pen.first_monster->next_monster = monster;
-    monster->previous_monster = pen.first_monster;
-    monster->next_monster = NULL;
-
-    Monster* monster2 = (Monster*)malloc(sizeof(Monster));
-    monster2->position = 6;
-    monster2->id = 1;
-    monster2->species = FUZZBALL;
-    monster2->speed = 3;
-    monster2->last_acted_millis = millis();
-    monster2->hunger = 5;
-    monster2->alive = 1;
-    monster2->last_hunger_millis = millis();
-
-    monster->next_monster = monster2;
-    monster2->previous_monster = monster;
-    monster2->next_monster = NULL;
+    pen.first_monster->next_monster = monster1;
+    monster1->previous_monster = pen.first_monster;
+    monster1->next_monster = monster2;
+    monster2->previous_monster = monster1;
 }
 
 // read the buttons
