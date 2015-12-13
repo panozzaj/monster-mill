@@ -15,7 +15,7 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define WRITABLE_OFFSET 1
 
 // game speed variables
-#define SECONDS_FOR_HUNGER 10
+#define SECONDS_FOR_HUNGER 200
 #define DEATH_HUNGER 20
 
 enum Button {
@@ -114,20 +114,20 @@ void setup() {
     pen.first_monster->hunger = 5;
     pen.first_monster->alive = 1;
     pen.first_monster->previous_monster = NULL;
+    pen.first_monster->next_monster = NULL;
     pen.first_monster->last_hunger_millis = millis();
 
     Monster* monster = (Monster*)malloc(sizeof(Monster));
     monster->position = 3;
     monster->id = 1;
     monster->species = DRAGON;
-    monster->next_monster = NULL;
     monster->previous_monster = pen.first_monster;
+    monster->next_monster = NULL;
     monster->speed = 8;
     monster->last_acted_millis = millis();
-    monster->hunger = 19;
+    monster->hunger = 10;
     monster->alive = 1;
     monster->last_hunger_millis = millis();
-
     pen.first_monster->next_monster = monster;
 }
 
@@ -216,12 +216,12 @@ void updateMonsters() {
 
         // slowest action is once every four seconds, depends on speed
         unsigned long next_action_millis =
-            monster->last_acted_millis + 4000 / monster->speed;
+            monster->last_acted_millis + 4000L / monster->speed;
 
-        // increase hunger every 20 minutes, modified by monster's
-        // base speed. starvation is six hours without food
-        unsigned long next_hunger_millis = monster->last_hunger_millis +
-            SECONDS_FOR_HUNGER * 1000 / monster->speed;
+        // Increase hunger, modified by monster's base metabolism.
+        unsigned long next_hunger_millis =
+            monster->last_hunger_millis +
+            SECONDS_FOR_HUNGER * 1000L / monster->speed;
 
         bool acted = 0;
 
