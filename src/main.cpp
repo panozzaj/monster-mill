@@ -18,6 +18,10 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define SECONDS_FOR_HUNGER 500
 #define DEATH_HUNGER 20
 
+#define INPUT_MODE_TREAT 0
+#define INPUT_MODE_MONEY 1
+#define INPUT_MODES 2
+
 enum Button {
     RIGHT,
     UP,
@@ -63,6 +67,8 @@ Pen pen;
 Button last_button = NONE;
 signed char cursor_position = 0;
 int current_pen_index = 1;
+int bank_balance = 1000;
+char input_mode = INPUT_MODE_TREAT;
 
 // symbols must be positive integers or cast as byte
 #define SYMBOL_CARROT 1
@@ -208,22 +214,35 @@ void printCursor() {
 }
 
 void printBottomLine() {
-    lcd.setCursor(0, BOTTOM_LINE);
-    lcd.write(SYMBOL_CARROT);
-
-    for (int i = 0; i < WRITABLE_WIDTH; ++i) {
-        if (pen.treats[i]) {
+    switch (input_mode) {
+        case INPUT_MODE_TREAT:
+            lcd.setCursor(0, BOTTOM_LINE);
             lcd.write(SYMBOL_CARROT);
-        } else {
-            lcd.print(" ");
-        }
-    }
 
-    printCursor();
+            for (int i = 0; i < WRITABLE_WIDTH; ++i) {
+                if (pen.treats[i]) {
+                    lcd.write(SYMBOL_CARROT);
+                } else {
+                    lcd.print(" ");
+                }
+            }
+            printCursor();
+            break;
+
+        case INPUT_MODE_MONEY:
+            lcd.setCursor(0, BOTTOM_LINE);
+            lcd.print("$");
+            lcd.print(bank_balance);
+            break;
+
+        default:
+            lcd.setCursor(0, BOTTOM_LINE);
+            lcd.print("?");
+            break;
+    }
 }
 
 void updateMonsters() {
-    int new_position;
     Monster *monster = pen.first_monster;
 
     while (monster) {
@@ -313,10 +332,19 @@ void processInput() {
             cursor_position--;
         } else if (last_button == RIGHT) {
             cursor_position++;
+        } else if (last_button == UP) {
+            input_mode -= 1;
+        } else if (last_button == DOWN) {
+            input_mode += 1;
         } else if (last_button == SELECT) {
             pen.treats[cursor_position] = !pen.treats[cursor_position];
         }
+
         // make sure we are positive
+
+        input_mode += INPUT_MODES;
+        input_mode %= INPUT_MODES;
+
         cursor_position += WRITABLE_WIDTH;
         cursor_position %= WRITABLE_WIDTH;
     }
