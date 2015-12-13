@@ -311,40 +311,53 @@ void updateMonsters() {
 }
 
 void processInput() {
-    Button new_button = readButtons();
+    Button new_button;
 
-    if (new_button != last_button) {
-        if (last_button == LEFT) {
-            cursor_position--;
-        } else if (last_button == RIGHT) {
-            cursor_position++;
-        } else if (last_button == UP) {
-            input_mode -= 1;
-        } else if (last_button == DOWN) {
-            input_mode += 1;
-        } else if (last_button == SELECT) {
-            if (pen.treats[cursor_position]) {
-                // remove treat
-                pen.treats[cursor_position] = 0;
-                bank_balance++;
-            } else {
-                if (bank_balance > 0) {
-                    pen.treats[cursor_position] = 1;
-                    bank_balance--;
+    switch (input_mode) {
+        case INPUT_MODE_TREAT:
+            new_button = readButtons();
+
+            if (new_button != last_button) {
+                if (last_button == LEFT) {
+                    cursor_position--;
+                } else if (last_button == RIGHT) {
+                    cursor_position++;
+                } else if (last_button == UP) {
+                    input_mode -= 1;
+                } else if (last_button == DOWN) {
+                    input_mode += 1;
+                } else if (last_button == SELECT) {
+                    if (pen.treats[cursor_position]) {
+                        // remove treat
+                        pen.treats[cursor_position] = 0;
+                        bank_balance++;
+                    } else {
+                        // add treat
+                        if (bank_balance > 0) {
+                            pen.treats[cursor_position] = 1;
+                            bank_balance--;
+                        }
+                    }
                 }
+
+                // make sure we are positive
+
+                input_mode += INPUT_MODES;
+                input_mode %= INPUT_MODES;
+
+                cursor_position += WRITABLE_WIDTH;
+                cursor_position %= WRITABLE_WIDTH;
             }
-        }
 
-        // make sure we are positive
+            last_button = new_button;
+            break;
 
-        input_mode += INPUT_MODES;
-        input_mode %= INPUT_MODES;
+        case INPUT_MODE_MONEY:
+            break;
 
-        cursor_position += WRITABLE_WIDTH;
-        cursor_position %= WRITABLE_WIDTH;
+        default:
+            break;
     }
-
-    last_button = new_button;
 }
 
 void loop() {
