@@ -14,6 +14,10 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define WRITABLE_WIDTH (LCD_WIDTH - 1)
 #define WRITABLE_OFFSET 1
 
+// game speed variables
+#define SECONDS_FOR_HUNGER 10
+#define DEATH_HUNGER 20
+
 enum Button {
     RIGHT,
     UP,
@@ -31,16 +35,17 @@ enum Species {
 struct Monster {
     unsigned int id;
     Monster* next_monster;
+    Monster* previous_monster;
     Species species;
+    bool alive;
 
     // space
     signed char position;
 
     // actions
     unsigned long last_acted_millis;
-
-    // probably should be a calculated value since it will depend
-    // on various attributes of the monster
+    unsigned long last_hunger_millis;
+    unsigned long died_at_millis;
     unsigned char speed;
 
     // status
@@ -106,14 +111,22 @@ void setup() {
     pen.first_monster->species = FUZZBALL;
     pen.first_monster->speed = 3;
     pen.first_monster->last_acted_millis = millis();
+    pen.first_monster->hunger = 5;
+    pen.first_monster->alive = 1;
+    pen.first_monster->previous_monster = NULL;
+    pen.first_monster->last_hunger_millis = millis();
 
     Monster* monster = (Monster*)malloc(sizeof(Monster));
     monster->position = 3;
     monster->id = 1;
     monster->species = DRAGON;
     monster->next_monster = NULL;
+    monster->previous_monster = pen.first_monster;
     monster->speed = 8;
     monster->last_acted_millis = millis();
+    monster->hunger = 19;
+    monster->alive = 1;
+    monster->last_hunger_millis = millis();
 
     pen.first_monster->next_monster = monster;
 }
@@ -143,21 +156,26 @@ Button readButtons() {
 
 void printMonsters() {
     lcd.setCursor(0, TOP_LINE);
-    char the_character[1];
-    itoa(current_pen_index, the_character, 10);
-    lcd.print(the_character);
+    char pen_char[1];
+    itoa(current_pen_index, pen_char, 10);
+    lcd.print(pen_char);
 
     Monster* monster = pen.first_monster;
 
+    // TODO: change to be able to print custom characters
     String positions = "               ";
 
     while (monster != NULL) {
-        if (monster->species == FUZZBALL) {
-            positions[monster->position] = 'f';
-        } else if (monster->species == DRAGON) {
-            positions[monster->position] = 'D';
+        if (!monster->alive) {
+            positions[monster->position] = 'x';
         } else {
-            positions[monster->position] = '?';
+            if (monster->species == FUZZBALL) {
+                positions[monster->position] = 'f';
+            } else if (monster->species == DRAGON) {
+                positions[monster->position] = 'D';
+            } else {
+                positions[monster->position] = '?';
+            }
         }
 
         monster = monster->next_monster;
@@ -194,21 +212,81 @@ void updateMonsters() {
     Monster *monster = pen.first_monster;
 
     while (monster) {
+        unsigned long current_millis = millis();
+
         // slowest action is once every four seconds, depends on speed
         unsigned long next_action_millis =
             monster->last_acted_millis + 4000 / monster->speed;
-        unsigned long current_millis = millis();
 
-        if (current_millis > next_action_millis) {
-            // randomly move in a direction
-            monster->position += (current_millis % 2 == 0) ? -1 : 1;
-            monster->position += WRITABLE_WIDTH;
-            monster->position %= WRITABLE_WIDTH;
+        // increase hunger every 20 minutes, modified by monster's
+        // base speed. starvation is six hours without food
+        unsigned long next_hunger_millis = monster->last_hunger_millis +
+            SECONDS_FOR_HUNGER * 1000 / monster->speed;
 
-            // use current_millis instead?
-            monster->last_acted_millis = next_action_millis;
+        bool acted = 0;
+
+        if (monster->alive) {
+            if (current_millis >= next_hunger_millis) {
+                monster->hunger++;
+                if (monster->hunger >= DEATH_HUNGER) {
+                    monster->alive = 0;
+                    monster->died_at_millis = current_millis;
+                }
+                monster->last_hunger_millis = next_hunger_millis;
+            }
         }
-        monster = monster->next_monster;
+
+        if (monster->alive) {
+            if (current_millis >= next_action_millis) {
+                if (monster->hunger > 0 && pen.treats[monster->position] && !acted) {
+                    // eat the treat
+                    pen.treats[monster->position] = 0;
+                    monster->hunger--;
+                    acted = 1;
+                }
+
+                if (!acted) {
+                    // randomly move in a direction
+                    monster->position += (current_millis % 2 == 0) ? -1 : 1;
+                    monster->position += WRITABLE_WIDTH;
+                    monster->position %= WRITABLE_WIDTH;
+                    acted = 1;
+                }
+
+                // use current_millis instead?
+                monster->last_acted_millis = next_action_millis;
+            }
+
+            monster = monster->next_monster;
+        } else { // dead
+            if (current_millis > monster->died_at_millis + 10 * 1000) {
+                Monster* next = monster->next_monster;
+                Monster* prev = monster->previous_monster;
+
+                // remove monster from ecosystem
+                // NULL - monster - NULL -> nothing
+                // prev - monster - NULL -> prev - NULL
+                // NULL - monster - next -> NULL - next
+                // prev - monster - next -> prev - next
+
+                if (prev != NULL) {
+                    prev->next_monster = next;
+                }
+
+                if (next != NULL) {
+                    prev->previous_monster = prev;
+                }
+
+                if (pen.first_monster == monster) {
+                    pen.first_monster = next;
+                }
+
+                free(monster);
+                monster = next;
+            } else {
+                monster = monster->next_monster;
+            }
+        }
     }
 }
 
@@ -217,9 +295,9 @@ void processInput() {
 
     if (new_button != last_button) {
         if (last_button == LEFT) {
-            cursor_position -= 1;
+            cursor_position--;
         } else if (last_button == RIGHT) {
-            cursor_position += 1;
+            cursor_position++;
         } else if (last_button == SELECT) {
             pen.treats[cursor_position] = !pen.treats[cursor_position];
         }
