@@ -15,7 +15,7 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 #define WRITABLE_OFFSET 1
 
 // game speed variables
-#define SECONDS_FOR_HUNGER 200
+#define SECONDS_FOR_HUNGER 500
 #define DEATH_HUNGER 20
 
 enum Button {
@@ -113,22 +113,37 @@ void setup() {
     pen.first_monster->last_acted_millis = millis();
     pen.first_monster->hunger = 5;
     pen.first_monster->alive = 1;
+    pen.first_monster->last_hunger_millis = millis();
     pen.first_monster->previous_monster = NULL;
     pen.first_monster->next_monster = NULL;
-    pen.first_monster->last_hunger_millis = millis();
 
     Monster* monster = (Monster*)malloc(sizeof(Monster));
     monster->position = 3;
     monster->id = 1;
     monster->species = DRAGON;
-    monster->previous_monster = pen.first_monster;
-    monster->next_monster = NULL;
     monster->speed = 8;
     monster->last_acted_millis = millis();
-    monster->hunger = 10;
+    monster->hunger = 5;
     monster->alive = 1;
     monster->last_hunger_millis = millis();
+
     pen.first_monster->next_monster = monster;
+    monster->previous_monster = pen.first_monster;
+    monster->next_monster = NULL;
+
+    Monster* monster2 = (Monster*)malloc(sizeof(Monster));
+    monster2->position = 6;
+    monster2->id = 1;
+    monster2->species = FUZZBALL;
+    monster2->speed = 3;
+    monster2->last_acted_millis = millis();
+    monster2->hunger = 5;
+    monster2->alive = 1;
+    monster2->last_hunger_millis = millis();
+
+    monster->next_monster = monster2;
+    monster2->previous_monster = monster;
+    monster2->next_monster = NULL;
 }
 
 // read the buttons
