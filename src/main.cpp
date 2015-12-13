@@ -36,6 +36,13 @@ struct Monster {
     // space
     signed char position;
 
+    // actions
+    unsigned long last_acted_millis;
+
+    // probably should be a calculated value since it will depend
+    // on various attributes of the monster
+    unsigned char speed;
+
     // status
     int hunger;
 };
@@ -97,12 +104,16 @@ void setup() {
     pen.first_monster->position = 0;
     pen.first_monster->id = 0;
     pen.first_monster->species = FUZZBALL;
+    pen.first_monster->speed = 3;
+    pen.first_monster->last_acted_millis = millis();
 
     Monster* monster = (Monster*)malloc(sizeof(Monster));
-    monster->position = 1;
+    monster->position = 3;
     monster->id = 1;
     monster->species = DRAGON;
     monster->next_monster = NULL;
+    monster->speed = 8;
+    monster->last_acted_millis = millis();
 
     pen.first_monster->next_monster = monster;
 }
@@ -183,7 +194,20 @@ void updateMonsters() {
     Monster *monster = pen.first_monster;
 
     while (monster) {
-        monster->position = (millis() / 1000 % WRITABLE_WIDTH + monster->id) % WRITABLE_WIDTH;
+        // slowest action is once every four seconds, depends on speed
+        unsigned long next_action_millis =
+            monster->last_acted_millis + 4000 / monster->speed;
+        unsigned long current_millis = millis();
+
+        if (current_millis > next_action_millis) {
+            // randomly move in a direction
+            monster->position += (current_millis % 2 == 0) ? -1 : 1;
+            monster->position += WRITABLE_WIDTH;
+            monster->position %= WRITABLE_WIDTH;
+
+            // use current_millis instead?
+            monster->last_acted_millis = next_action_millis;
+        }
         monster = monster->next_monster;
     }
 }
@@ -193,14 +217,15 @@ void processInput() {
 
     if (new_button != last_button) {
         if (last_button == LEFT) {
-            cursor_position = cursor_position - 1;
+            cursor_position -= 1;
         } else if (last_button == RIGHT) {
-            cursor_position = cursor_position + 1;
+            cursor_position += 1;
         } else if (last_button == SELECT) {
             pen.treats[cursor_position] = !pen.treats[cursor_position];
         }
-        // make sure we are on the writable board
-        cursor_position = (cursor_position + WRITABLE_WIDTH) % WRITABLE_WIDTH;
+        // make sure we are positive
+        cursor_position += WRITABLE_WIDTH;
+        cursor_position %= WRITABLE_WIDTH;
     }
 
     last_button = new_button;
