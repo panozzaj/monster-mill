@@ -114,6 +114,7 @@ Monster* createMonster(char position) {
 
 void setup() {
     Serial.begin(9600);
+    randomSeed(analogRead(0));
 
     // initialize LCD screen
     lcd.begin(LCD_WIDTH, LCD_HEIGHT);
@@ -266,8 +267,7 @@ void updateMonsters() {
                 }
 
                 if (!acted) {
-                    // randomly move in a direction
-                    monster->position += (current_millis % 2 == 0) ? -1 : 1;
+                    monster->position += random(2) * 2 - 1;
                     monster->position += WRITABLE_WIDTH;
                     monster->position %= WRITABLE_WIDTH;
                     acted = 1;
