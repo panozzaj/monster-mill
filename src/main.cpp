@@ -352,6 +352,22 @@ void processInput() {
             break;
 
         case INPUT_MODE_MONEY:
+            new_button = readButtons();
+
+            if (new_button != last_button) {
+                if (last_button == UP) {
+                    input_mode -= 1;
+                } else if (last_button == DOWN) {
+                    input_mode += 1;
+                }
+
+                // make sure we are positive
+
+                input_mode += INPUT_MODES;
+                input_mode %= INPUT_MODES;
+            }
+
+            last_button = new_button;
             break;
 
         default:
