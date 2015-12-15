@@ -106,7 +106,6 @@ Monster* createMonster(char position) {
     monster->alive = 1;
     monster->last_acted_millis = millis();
     monster->last_hunger_millis = millis();
-    monster->born_at_millis = millis();
     monster->previous_monster = NULL;
     monster->next_monster = NULL;
     return monster;
